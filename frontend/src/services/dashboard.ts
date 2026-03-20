@@ -14,8 +14,27 @@ const fallbackAudit: AuditEvent[] = [
 ];
 
 const fallbackTickets: Ticket[] = [
-  { id: "T-109", caseId: "C-334", type: "Withdrawal", status: "pending" },
-  { id: "T-107", caseId: "C-332", type: "Policy change", status: "approved" }
+  {
+    id: "T-109",
+    caseId: "C-334",
+    ticketType: "transfer_request",
+    description: "PoC transfer request awaiting review.",
+    status: "pending_review",
+    linkedDocumentIds: [],
+    approvalHistory: []
+  },
+  {
+    id: "T-107",
+    caseId: "C-332",
+    ticketType: "custody_change",
+    description: "PoC custody change approved.",
+    status: "approved",
+    linkedDocumentIds: [],
+    approvalHistory: [
+      { stage: 1, decision: "approved", decidedBy: "admin01", decidedAt: "2026-03-19 08:20" },
+      { stage: 2, decision: "approved", decidedBy: "admin02", decidedAt: "2026-03-19 08:45" }
+    ]
+  }
 ];
 
 export const dashboardService = {

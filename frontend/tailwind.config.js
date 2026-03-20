@@ -3,11 +3,23 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          "ui-sans-serif",
+          "system-ui",
+          "Segoe UI Variable",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif"
+        ]
+      },
       colors: {
-        gold: "#F0B90B",
-        dark: "#181A20",
-        "dark-panel": "#202630",
-        "dark-card": "#2B3342"
+        gold: "#D6A84F",
+        dark: "#0B1220",
+        "dark-panel": "#0F1A2B",
+        "dark-card": "#14233A"
       }
     }
   },

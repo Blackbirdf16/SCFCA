@@ -7,7 +7,7 @@ import { Role } from "../types";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("case_handler");
+  const [role, setRole] = useState<Role>("regular");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,6 +27,7 @@ export default function Login() {
       login(user);
       navigate("/dashboard", { replace: true });
     } catch (err) {
+      console.error(err);
       setError("Login failed. Check backend status and credentials.");
     } finally {
       setLoading(false);
@@ -35,17 +36,19 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark px-4">
-      <form onSubmit={handleSubmit} className="bg-dark-panel border border-slate-700/60 p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold text-gold mb-1">SCFCA Control Panel</h1>
+      <form onSubmit={handleSubmit} className="panel p-8 w-full max-w-md">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-100 mb-1">
+          <span className="text-gold">SCFCA</span> Control Panel
+        </h1>
         <p className="text-sm text-slate-400 mb-6">Institutional custody thesis demo</p>
         <input
-          className="w-full mb-4 p-3 rounded bg-dark text-white border border-gray-700"
+          className="w-full mb-4 p-3 rounded bg-dark-card/50 text-slate-100 border border-slate-600/40 focus:border-slate-400/60 transition"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
-          className="w-full mb-4 p-3 rounded bg-dark text-white border border-gray-700"
+          className="w-full mb-4 p-3 rounded bg-dark-card/50 text-slate-100 border border-slate-600/40 focus:border-slate-400/60 transition"
           type="password"
           placeholder="Password"
           value={password}
@@ -53,11 +56,11 @@ export default function Login() {
         />
 
         <select
-          className="w-full mb-4 p-3 rounded bg-dark text-white border border-gray-700"
+          className="w-full mb-4 p-3 rounded bg-dark-card/50 text-slate-100 border border-slate-600/40 focus:border-slate-400/60 transition"
           value={role}
           onChange={(e) => setRole(e.target.value as Role)}
         >
-          <option value="case_handler">case_handler</option>
+          <option value="regular">regular</option>
           <option value="administrator">administrator</option>
           <option value="auditor">auditor</option>
         </select>
@@ -66,7 +69,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded bg-gold text-dark font-bold hover:bg-yellow-400 transition disabled:opacity-60"
+          className="accent-button w-full py-3 font-semibold disabled:opacity-60"
         >
           {loading ? "Signing in..." : "Login"}
         </button>

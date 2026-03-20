@@ -1,35 +1,48 @@
-"""
-Authentication and RBAC dependencies for SCFCA PoC.
-Not production-grade: demo only.
-"""
-from fastapi import Depends, HTTPException, status, Request
-from backend.core.models import User, RoleEnum
-from backend.core.database import SessionLocal
-from typing import Optional
+"""Authentication + RBAC dependencies for SCFCA PoC.
 
-# Simple session-based demo auth (not secure, for PoC only)
+Demo-safe only:
+- Uses cookies (or optional headers) to identify a principal.
+- No password verification and no database dependency.
+"""
 
-def get_current_user(request: Request) -> User:
-    username = request.cookies.get("scfca_user")
-    if not username:
+from dataclasses import dataclass
+from fastapi import Depends, HTTPException, Request, status
+
+from backend.auth.schemas import Role
+
+
+@dataclass(frozen=True)
+class Principal:
+    username: str
+    role: Role
+
+
+def get_current_principal(request: Request) -> Principal:
+    username = request.cookies.get("scfca_user") or request.headers.get("x-scfca-user")
+    role_raw = request.cookies.get("scfca_role") or request.headers.get("x-scfca-role")
+
+    if not username or not role_raw:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    db = SessionLocal()
-    user = db.query(User).filter(User.username == username).first()
-    db.close()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
 
-def require_role(role: RoleEnum):
-    def dependency(user: User = Depends(get_current_user)):
-        if user.role != role:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Requires role: {role}")
-        return user
+    try:
+        role = Role(role_raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid role") from exc
+
+    return Principal(username=username, role=role)
+
+
+def require_any_role(roles: list[Role]):
+    def dependency(principal: Principal = Depends(get_current_principal)) -> Principal:
+        if principal.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires one of roles: {[r.value for r in roles]}",
+            )
+        return principal
+
     return dependency
 
-def require_any_role(roles: list[RoleEnum]):
-    def dependency(user: User = Depends(get_current_user)):
-        if user.role not in roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Requires one of roles: {roles}")
-        return user
-    return dependency
+
+def require_role(role: Role):
+    return require_any_role([role])

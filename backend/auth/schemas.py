@@ -5,10 +5,11 @@ from pydantic import BaseModel
 from enum import Enum
 
 class Role(str, Enum):
-    case_handler = "case_handler"
+    regular = "regular"
     administrator = "administrator"
     auditor = "auditor"
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+    role: Role

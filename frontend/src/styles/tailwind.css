@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-dark text-gray-100 antialiased;
+  @apply bg-dark text-slate-100 antialiased font-sans;
 }
 
 #root {
@@ -11,24 +11,24 @@ body {
 }
 
 @layer base {
-  input,
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
   select,
   textarea {
-    @apply outline-none ring-0;
+    @apply w-full rounded-md border border-slate-700/70 bg-dark px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-0 focus:border-slate-400/60 transition;
   }
 
   th,
   td {
-    @apply px-1;
+    @apply px-3;
   }
 }
 
 @layer components {
   .panel {
-    @apply rounded-xl border border-slate-700/60 bg-dark-panel;
+    @apply rounded-xl border border-slate-600/30 bg-dark-panel;
   }
 
   .accent-button {
-    @apply bg-gold text-dark font-semibold hover:bg-yellow-400 transition rounded-md;
+    @apply bg-gold text-dark font-semibold hover:bg-gold/90 active:bg-gold/80 transition rounded-md;
   }
 }
