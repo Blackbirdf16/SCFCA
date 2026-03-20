@@ -12,20 +12,19 @@ cd scfca-repo
 - Install Python 3.10+
 - Install dependencies:
 	```
-	cd backend
-	pip install -r requirements.txt
+	pip install -r backend/requirements.txt
 	```
 - Seed demo data:
 	```
-	cd ../scripts
+	cd scripts
 	python seed_demo_data.py
 	```
 - Run backend API:
 	```
-	cd ../backend
-	uvicorn main:app --reload
+	cd ..
+	python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 	```
-	API docs: http://localhost:8000/docs
+	API docs: http://127.0.0.1:8000/docs
 
 ### 3. (Optional) Run tests
 ```
@@ -33,12 +32,17 @@ cd ../tests
 pytest
 ```
 
-### 4. Frontend (Streamlit)
-- (If implemented) Run Streamlit UI:
+### 4. Frontend (React + TypeScript)
+- Install Node.js 20+ (includes npm)
+- Install frontend dependencies and start the dev server:
 	```
-	cd ../frontend
-	streamlit run app.py
+	cd frontend
+	npm install
+	npm run dev -- --host 127.0.0.1 --port 5173
 	```
+	Frontend URL: http://127.0.0.1:5173
+
+If PowerShell shows `npm is not recognized`, install Node.js and reopen the terminal.
 
 ---
 

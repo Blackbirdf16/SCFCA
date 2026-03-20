@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+
+# OS/editor
+.DS_Store
+Thumbs.db
