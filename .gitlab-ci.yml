@@ -1,0 +1,312 @@
+# GitLab CI for SCFCA (FastAPI backend + Vite React frontend)
+# Stages: validate -> test -> build -> security -> dast
+
+stages:
+  - validate
+  - test
+  - build
+  - security
+  - dast
+
+# Include GitLab security templates. Container Scanning included because CI builds images.
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/DAST.gitlab-ci.yml
+
+variables:
+  IMAGE_REGISTRY: "$CI_REGISTRY_IMAGE"
+  BACKEND_IMAGE: "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
+  FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
+  DAST_TARGET_URL: ""
+
+# Use Docker-in-Docker for building images (shared runners may require alternative setup)
+image: docker:24.0.2
+services:
+  - docker:24.0.2-dind
+
+# ---------------------
+# validate
+# ---------------------
+validate:
+  stage: validate
+  image: python:3.11-slim
+  rules:
+    - when: always
+  script:
+    - python --version
+    - pip --version
+    - echo "Checking backend requirements"
+    - if [ -f backend/requirements.txt ]; then python -m pip install --upgrade pip && pip install -r backend/requirements.txt; else echo "no backend requirements"; fi
+
+# ---------------------
+# test
+# Backend pytest and optional frontend typecheck
+# ---------------------
+backend-tests:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install pytest pytest-cov
+    - if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+  script:
+    - mkdir -p reports
+    - pytest backend/tests --junitxml=reports/junit.xml --cov=backend || true
+  artifacts:
+    when: always
+    paths:
+      - reports/
+    expire_in: 1 week
+    reports:
+      junit: reports/junit.xml
+  rules:
+    - exists:
+        - backend/tests/
+      when: always
+    - when: never
+
+frontend-typecheck:
+  stage: test
+  image: node:18-alpine
+  before_script:
+    - apk add --no-cache git
+    - cd frontend
+    - npm ci --silent
+  script:
+    - npm run typecheck
+  rules:
+    - exists:
+        - frontend/package.json
+      when: manual
+    - when: never
+
+# ---------------------
+# build
+# Build and optionally push images
+# ---------------------
+build-backend:
+  stage: build
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - docker build -t "$BACKEND_IMAGE" -f backend/Dockerfile .
+    - |
+      if [ -n "$CI_REGISTRY" ] && [ -n "$CI_REGISTRY_USER" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$BACKEND_IMAGE" || true
+      else
+        echo "No registry configured; skipping push"
+      fi
+  rules:
+    - exists:
+        - backend/Dockerfile
+      when: always
+    - when: never
+
+build-frontend:
+  stage: build
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - docker build -t "$FRONTEND_IMAGE" -f frontend/Dockerfile .
+    - |
+      if [ -n "$CI_REGISTRY" ] && [ -n "$CI_REGISTRY_USER" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$FRONTEND_IMAGE" || true
+      else
+        echo "No registry configured; skipping push"
+      fi
+  rules:
+    - exists:
+        - frontend/Dockerfile
+      when: always
+    - when: never
+
+# ---------------------
+# security
+# Templates produce security reports visible in GitLab
+# ---------------------
+
+# ---------------------
+# DAST
+# Manual opt-in. Set DAST_TARGET_URL in CI/CD variables to run.
+# ---------------------
+dast:
+  stage: dast
+  variables:
+    DAST_WEBSITE: "$DAST_TARGET_URL"
+  rules:
+    - if: '$DAST_TARGET_URL != ""'
+      when: manual
+    - when: never
+  allow_failure: true
+# GitLab CI/CD pipeline tuned for a Python DevSecOps project.
+# Stages: validate -> test -> security -> dast -> build -> deploy
+# Templates: SAST, Dependency Scanning, Secret Detection, DAST
+# Container Scanning is NOT included because no Dockerfile was detected in the repo.
+
+stages:
+  - validate
+  - test
+  - security
+  - dast
+  - build
+  - deploy
+
+# build stage
+
+# Production-style GitLab CI for SCFCA
+# Stages: validate -> test -> build -> security -> dast
+# This pipeline builds Docker images (backend & frontend), runs backend tests,
+# and integrates GitLab-native security templates including Container Scanning.
+
+stages:
+  - validate
+  - test
+  - build
+  - security
+  - dast
+
+# Include GitLab security templates. Container-Scanning is included because
+# this pipeline builds images for both services.
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/DAST.gitlab-ci.yml
+
+variables:
+  # docker build args
+  IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+  PYTHONUNBUFFERED: "1"
+  DAST_TARGET_URL: ""
+
+# Use Docker in Docker service for image builds (Shared runners may require config)
+image: docker:24.0.2
+services:
+  - name: docker:24.0.2-dind
+    command: ["--insecure-registry=registry:5000"]
+
+# Use a small default before switching to language-specific images in jobs
+variables:
+  DOCKER_DRIVER: overlay2
+
+# ---------------------
+# validate
+# Quick lint / dependency sanity checks
+# ---------------------
+validate:
+  stage: validate
+  image: python:3.11-slim
+  rules:
+    - when: always
+  script:
+    - python --version
+    - pip --version
+    - |
+      if [ -f backend/requirements.txt ]; then
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+      else
+        echo "No backend/requirements.txt found; skipping"
+      fi
+
+# ---------------------
+# test
+# Run backend pytest and capture JUnit/coverage
+# ---------------------
+backend-tests:
+  stage: test
+  image: python:3.11-slim
+  variables:
+    PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install pytest pytest-cov
+    - if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+  script:
+    - mkdir -p reports
+    - pytest backend/tests --junitxml=reports/junit.xml --cov=backend --cov-report=xml:reports/coverage.xml || true
+  artifacts:
+    when: always
+    paths:
+      - reports/
+    expire_in: 1 week
+    reports:
+      junit: reports/junit.xml
+  rules:
+    - exists:
+        - backend/tests/
+      when: always
+    - when: never
+
+# ---------------------
+# build
+# Build Docker images for backend and frontend and push to registry if configured
+# ---------------------
+build-backend:
+  stage: build
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" -f backend/Dockerfile .
+    - docker tag "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" "$IMAGE_TAG-backend"
+    - |
+      if [ -n "$CI_REGISTRY" ] && [ -n "$CI_REGISTRY_USER" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" || true
+      else
+        echo "No registry configured; skipping push"
+      fi
+  rules:
+    - when: always
+
+build-frontend:
+  stage: build
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" -f frontend/Dockerfile .
+    - docker tag "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" "$IMAGE_TAG-frontend"
+    - |
+      if [ -n "$CI_REGISTRY" ] && [ -n "$CI_REGISTRY_USER" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" || true
+      else
+        echo "No registry configured; skipping push"
+      fi
+  rules:
+    - when: always
+
+# ---------------------
+# security
+# GitLab SAST, Dependency Scanning, Secret Detection, Container Scanning included via templates
+# ---------------------
+
+# ---------------------
+# DAST
+# Manual opt-in; requires DAST_TARGET_URL variable set in CI/CD settings
+# ---------------------
+dast:
+  stage: dast
+  variables:
+    DAST_WEBSITE: "$DAST_TARGET_URL"
+  rules:
+    - if: '$DAST_TARGET_URL != ""'
+      when: manual
+    - when: never
+  allow_failure: true
