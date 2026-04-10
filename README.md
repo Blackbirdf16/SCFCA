@@ -24,6 +24,13 @@ Seed demo data (first time):
 ```bash
 docker compose exec backend python scripts/seed_demo_data.py
 ```
+or if it doesnt work as supposed to
+
+```bash
+docker compose exec backend sh -c "mkdir -p /app/scripts"
+docker cp .\scripts\seed_demo_data.py scfca-backend:/app/scripts/seed_demo_data.py
+docker compose exec backend python /app/scripts/seed_demo_data.py
+```
 
 ### Option B: Local (no Docker)
 
