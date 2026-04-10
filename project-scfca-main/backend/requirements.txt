@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+passlib[bcrypt]
+bcrypt<4
+pydantic-settings
+psycopg2-binary
+PyJWT
+python-multipart
+httpx
+alembic
+eval_type_backport
+reportlab
+pyotp

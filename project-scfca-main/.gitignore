@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Local test artifacts
+.tmp_cookies.txt
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+
+# OS/editor
+.DS_Store
+Thumbs.db

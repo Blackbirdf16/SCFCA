@@ -1,0 +1,13 @@
+# Top-level dockerignore to speed builds and avoid copying large files
+**/__pycache__
+**/*.pyc
+**/.venv
+node_modules
+dist
+build
+.git
+.gitlab-ci.yml
+.env
+.env.*
+.vscode
+.DS_Store
