@@ -1,0 +1,52 @@
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/project-scfca-main/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "security"
+    commit-message:
+      prefix: "deps"
+    reviewers:
+      - "Blackbirdf16"
+
+  - package-ecosystem: "npm"
+    directory: "/project-scfca-main/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+    commit-message:
+      prefix: "deps"
+    reviewers:
+      - "Blackbirdf16"
+
+  - package-ecosystem: "docker"
+    directory: "/project-scfca-main/backend"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: "docker"
+    directory: "/project-scfca-main/frontend"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "deps"
