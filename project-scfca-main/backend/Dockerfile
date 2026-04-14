@@ -1,6 +1,6 @@
 # Backend Dockerfile for FastAPI app
 # Builds a compact runtime image that runs: uvicorn backend.main:app
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
