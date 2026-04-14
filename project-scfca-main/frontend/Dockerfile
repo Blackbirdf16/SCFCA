@@ -2,7 +2,7 @@
 # This Dockerfile supports both a dev-friendly image and a small production build.
 
 # Stage 1 - deps & build
-FROM node:18-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 # Copy package files first for better layer caching
 COPY frontend/package*.json ./
