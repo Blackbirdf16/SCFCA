@@ -5,48 +5,65 @@ updates:
     directory: "/project-scfca-main/backend"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "python"
       - "security"
     commit-message:
       prefix: "deps"
-    reviewers:
-      - "Blackbirdf16"
+    ignore:
+      - dependency-name: "bcrypt"
+        versions: [">=4"]
+    groups:
+      backend-python:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/project-scfca-main/frontend"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "frontend"
       - "security"
     commit-message:
       prefix: "deps"
-    reviewers:
-      - "Blackbirdf16"
+    groups:
+      frontend-npm:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/project-scfca-main/backend"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "docker"
       - "security"
     commit-message:
       prefix: "deps"
+    ignore:
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: "docker"
     directory: "/project-scfca-main/frontend"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "docker"
       - "security"
     commit-message:
       prefix: "deps"
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
