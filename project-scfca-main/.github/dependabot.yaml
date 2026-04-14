@@ -1,0 +1,57 @@
+# .github/dependabot.yml
+version: 2
+
+updates:
+  # Python backend dependencies
+  - package-ecosystem: "pip"
+    directory: "/project-scfca-main/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "security"
+    commit-message:
+      prefix: "deps"
+    reviewers:
+      - "Blackbirdf16"
+
+  # Frontend npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/project-scfca-main/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+    commit-message:
+      prefix: "deps"
+    reviewers:
+      - "Blackbirdf16"
+
+  # Backend Dockerfile base image updates
+  - package-ecosystem: "docker"
+    directory: "/project-scfca-main/backend"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "deps"
+
+  # Frontend Dockerfile base image updates
+  - package-ecosystem: "docker"
+    directory: "/project-scfca-main/frontend"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "deps"
