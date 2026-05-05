@@ -16,6 +16,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from backend.auth.csrf import require_csrf
 from backend.auth.dependencies import Principal, require_any_role, get_current_principal
 from backend.auth.schemas import Role
 
@@ -122,6 +123,7 @@ def list_tickets(principal: Principal = Depends(get_current_principal)):
 @router.post("/", summary="Create ticket", tags=["tickets"])
 def create_ticket(
     payload: TicketCreate,
+    _: None = Depends(require_csrf),
     principal: Principal = Depends(require_any_role([Role.regular, Role.administrator])),
 ):
     case_id = (payload.caseId or "").strip().upper()
@@ -153,6 +155,7 @@ def create_ticket(
 def update_status(
     ticket_id: str,
     payload: TicketStatusUpdate,
+    _: None = Depends(require_csrf),
     principal: Principal = Depends(require_any_role([Role.administrator])),
 ):
     next_status = (payload.status or "").strip().lower()
@@ -174,6 +177,7 @@ def update_status(
 def assign_ticket(
     ticket_id: str,
     payload: TicketAssignUpdate,
+    _: None = Depends(require_csrf),
     principal: Principal = Depends(require_any_role([Role.administrator])),
 ):
     assignee = (payload.assignedTo or "").strip()
@@ -192,6 +196,7 @@ def assign_ticket(
 @router.post("/{ticket_id}/approve", summary="Approve ticket (2-step)", tags=["tickets"])
 def approve_ticket(
     ticket_id: str,
+    _: None = Depends(require_csrf),
     principal: Principal = Depends(require_any_role([Role.administrator])),
 ):
     for idx, t in enumerate(TICKETS):
@@ -223,6 +228,7 @@ def approve_ticket(
 @router.post("/{ticket_id}/reject", summary="Reject ticket", tags=["tickets"])
 def reject_ticket(
     ticket_id: str,
+    _: None = Depends(require_csrf),
     principal: Principal = Depends(require_any_role([Role.administrator])),
 ):
     for idx, t in enumerate(TICKETS):

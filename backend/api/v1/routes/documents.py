@@ -13,10 +13,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from backend.auth.csrf import require_csrf
 from backend.auth.dependencies import Principal, get_current_principal, require_any_role
 from backend.auth.schemas import Role
 
 router = APIRouter()
+MAX_PDF_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
 class DocumentRecord(BaseModel):
@@ -35,6 +37,7 @@ class DocumentCreate(BaseModel):
     createdAt: str
     caseId: str | None = None
     walletRef: str | None = None
+    sizeBytes: int | None = None
 
 
 DOCUMENTS: list[DocumentRecord] = [
@@ -86,6 +89,7 @@ def list_documents(principal: Principal = Depends(get_current_principal)):
 @router.post("/", summary="Upload/register document", tags=["documents"])
 def upload_document(
     payload: DocumentCreate,
+    _: None = Depends(require_csrf),
     principal: Principal = Depends(require_any_role([Role.regular, Role.administrator])),
 ):
     name = (payload.name or "").strip()
@@ -94,6 +98,13 @@ def upload_document(
 
     if not name or not doc_hash or not created_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="name, hash, createdAt are required")
+    if not name.lower().endswith(".pdf"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF documents are allowed")
+    if payload.sizeBytes is not None:
+        if payload.sizeBytes <= 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="sizeBytes must be positive")
+        if payload.sizeBytes > MAX_PDF_UPLOAD_BYTES:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="PDF exceeds upload size limit")
 
     case_id = payload.caseId.strip().upper() if payload.caseId else None
     wallet_ref = payload.walletRef.strip().upper() if payload.walletRef else None
